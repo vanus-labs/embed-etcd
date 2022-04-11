@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package embed_etcd
+package embedetcd
 
 import (
 	"context"
@@ -24,10 +24,8 @@ func TestNew(t *testing.T) {
 	etcd := New()
 	ctx := context.Background()
 	cfg := Config{
-		Name:        "test-1",
-		DataDir:     "/tmp/embed_etcd",
-		ClientAddrs: "0.0.0.0:2379",
-		PeerAddrs:   "0.0.0.0:2380",
+		Name:    "test-1",
+		DataDir: "/tmp/embed_etcd",
 	}
 	if err := etcd.Init(ctx, cfg); err != nil {
 		panic(err)
