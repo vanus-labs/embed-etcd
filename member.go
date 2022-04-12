@@ -23,16 +23,16 @@ type EventType string
 const (
 	EventBecomeLeader   = "become_leader"
 	EventBecomeFollower = "become_follower"
-	EventElection       = "election"
 )
 
-type MemberEvent struct {
+type MembershipChangedEvent struct {
 	Type   EventType
 	Leader string
 }
 
 type Member interface {
-	Watch(context.Context) (<-chan MemberEvent, error)
+	RegisterMembershipChangedProcessor(context.Context, func(context.Context, MembershipChangedEvent) error)
+	ResignIfLeader(context.Context)
 	IsLeader() bool
 	GetLeaderID() string
 }

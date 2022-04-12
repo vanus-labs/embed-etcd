@@ -109,8 +109,17 @@ func (ee *embedEtcd) Stop(ctx context.Context) {
 	ee.instance.Server.Stop()
 }
 
-func (ee *embedEtcd) Watch(ctx context.Context) (<-chan MemberEvent, error) {
+func (ee *embedEtcd) MembershipNotify(ctx context.Context) (<-chan MembershipChangedEvent, error) {
 	return nil, nil
+}
+
+func (ee *embedEtcd) RegisterMembershipChangedProcessor(ctx context.Context,
+	f func(ctx context.Context, event MembershipChangedEvent) error) {
+
+}
+
+func (ee *embedEtcd) ResignIfLeader(ctx context.Context) {
+	
 }
 
 func (ee *embedEtcd) IsLeader() bool {
