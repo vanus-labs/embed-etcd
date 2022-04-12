@@ -56,6 +56,7 @@ type embedEtcd struct {
 	ctx        context.Context
 	client     *clientv3.Client
 	httpClient *http.Client
+	isLeader   bool
 }
 
 func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
@@ -109,21 +110,53 @@ func (ee *embedEtcd) Stop(ctx context.Context) {
 	ee.instance.Server.Stop()
 }
 
-func (ee *embedEtcd) MembershipNotify(ctx context.Context) (<-chan MembershipChangedEvent, error) {
-	return nil, nil
-}
-
 func (ee *embedEtcd) RegisterMembershipChangedProcessor(ctx context.Context,
 	f func(ctx context.Context, event MembershipChangedEvent) error) {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info("membership changed listener stopped", nil)
+			return
+		default:
+		}
 
+		event := MembershipChangedEvent{
+			Leader: ee.instance.Server.Lead(),
+		}
+
+		isLeader := ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
+		var err error
+		if ee.isLeader && !isLeader {
+			ee.isLeader = false
+			event.Type = EventBecomeFollower
+			err = f(context.Background(), event)
+		} else if !ee.isLeader && isLeader {
+			ee.isLeader = true
+			event.Type = EventBecomeLeader
+			err = f(context.Background(), event)
+		}
+		if err != nil {
+			ee.isLeader = false
+			ee.ResignIfLeader(ctx)
+			log.Error("failed to process membership event", map[string]interface{}{
+				"error": err,
+			})
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (ee *embedEtcd) ResignIfLeader(ctx context.Context) {
-	
+	if err := ee.instance.Server.TransferLeadership(); err != nil {
+		log.Warning("transfer leadership to another failed", map[string]interface{}{
+			"error": err,
+		})
+	}
 }
 
 func (ee *embedEtcd) IsLeader() bool {
-	return ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
+	return ee.isLeader && ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
 }
 
 func (ee *embedEtcd) GetLeaderID() string {
@@ -145,7 +178,6 @@ func (ee *embedEtcd) startEtcd(ctx context.Context) error {
 	}
 
 	// TODO support add TLS
-
 	select {
 	// Wait etcd until it is ready to use
 	case <-etcd.Server.ReadyNotify():

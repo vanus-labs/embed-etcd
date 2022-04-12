@@ -27,7 +27,7 @@ const (
 
 type MembershipChangedEvent struct {
 	Type   EventType
-	Leader string
+	Leader uint64
 }
 
 type Member interface {
