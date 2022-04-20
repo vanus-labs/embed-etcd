@@ -35,6 +35,7 @@ type Member interface {
 	ResignIfLeader(context.Context)
 	IsLeader() bool
 	GetLeaderID() string
+	GetLeaderAddr() string
 }
 
 type LeaderInfo struct {

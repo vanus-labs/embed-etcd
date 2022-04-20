@@ -112,39 +112,43 @@ func (ee *embedEtcd) Stop(ctx context.Context) {
 
 func (ee *embedEtcd) RegisterMembershipChangedProcessor(ctx context.Context,
 	f func(ctx context.Context, event MembershipChangedEvent) error) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("membership changed listener stopped", nil)
-			return
-		default:
-		}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info("membership changed listener stopped", nil)
+				return
+			default:
+			}
 
-		event := MembershipChangedEvent{
-			Leader: ee.instance.Server.Lead(),
-		}
+			ee.instance.Server.LeaderChangedNotify()
 
-		isLeader := ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
-		var err error
-		if ee.isLeader && !isLeader {
-			ee.isLeader = false
-			event.Type = EventBecomeFollower
-			err = f(context.Background(), event)
-		} else if !ee.isLeader && isLeader {
-			ee.isLeader = true
-			event.Type = EventBecomeLeader
-			err = f(context.Background(), event)
+			event := MembershipChangedEvent{
+				Leader: ee.instance.Server.Lead(),
+			}
+
+			isLeader := ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
+			var err error
+			if ee.isLeader && !isLeader {
+				ee.isLeader = false
+				event.Type = EventBecomeFollower
+				err = f(context.Background(), event)
+			} else if !ee.isLeader && isLeader {
+				ee.isLeader = true
+				event.Type = EventBecomeLeader
+				err = f(context.Background(), event)
+			}
+			if err != nil {
+				ee.isLeader = false
+				ee.ResignIfLeader(ctx)
+				log.Error("failed to process membership event", map[string]interface{}{
+					"error": err,
+				})
+				return
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
-		if err != nil {
-			ee.isLeader = false
-			ee.ResignIfLeader(ctx)
-			log.Error("failed to process membership event", map[string]interface{}{
-				"error": err,
-			})
-			return
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
+	}()
 }
 
 func (ee *embedEtcd) ResignIfLeader(ctx context.Context) {
@@ -161,6 +165,22 @@ func (ee *embedEtcd) IsLeader() bool {
 
 func (ee *embedEtcd) GetLeaderID() string {
 	return ee.instance.Server.Leader().String()
+}
+
+func (ee *embedEtcd) GetLeaderAddr() string {
+	id := ee.instance.Server.Leader()
+	if id == 0 {
+		return "unavailable"
+	}
+	member := ee.instance.Server.Cluster().Member(id)
+	if member == nil {
+		return "unavailable"
+	}
+	if len(member.ClientURLs) == 0 {
+		return "unavailable"
+	}
+	urls := member.ClientURLs
+	return urls[0]
 }
 
 var (
