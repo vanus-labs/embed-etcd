@@ -23,6 +23,7 @@ import (
 	"go.etcd.io/etcd/server/v3/embed"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -49,6 +50,8 @@ func New() *embedEtcd {
 	}
 }
 
+type MembershipEventProcessor func(ctx context.Context, event MembershipChangedEvent) error
+
 type embedEtcd struct {
 	instance   *embed.Etcd
 	cfg        *Config
@@ -57,6 +60,9 @@ type embedEtcd struct {
 	client     *clientv3.Client
 	httpClient *http.Client
 	isLeader   bool
+	mutex      sync.RWMutex
+	once       sync.Once
+	handlers   []MembershipEventProcessor
 }
 
 func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
@@ -110,45 +116,54 @@ func (ee *embedEtcd) Stop(ctx context.Context) {
 	ee.instance.Server.Stop()
 }
 
-func (ee *embedEtcd) RegisterMembershipChangedProcessor(ctx context.Context,
-	f func(ctx context.Context, event MembershipChangedEvent) error) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Info("membership changed listener stopped", nil)
-				return
-			default:
-			}
+func (ee *embedEtcd) RegisterMembershipChangedProcessor(ctx context.Context, handler MembershipEventProcessor) {
+	ee.mutex.Lock()
+	defer ee.mutex.Unlock()
+	ee.handlers = append(ee.handlers, handler)
+	ee.once.Do(func() {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					log.Info("membership changed listener stopped", nil)
+					return
+				default:
+				}
 
-			ee.instance.Server.LeaderChangedNotify()
+				event := MembershipChangedEvent{
+					Leader: ee.instance.Server.Lead(),
+				}
 
-			event := MembershipChangedEvent{
-				Leader: ee.instance.Server.Lead(),
+				isLeader := ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
+				var err error
+				if ee.isLeader && !isLeader {
+					ee.isLeader = false
+					event.Type = EventBecomeFollower
+				} else if !ee.isLeader && isLeader {
+					ee.isLeader = true
+					event.Type = EventBecomeLeader
+				}
+				ee.mutex.RLock()
+				for _, handler := range ee.handlers {
+					err = handler(context.Background(), event)
+					if err != nil {
+						break
+					}
+				}
+				ee.mutex.RUnlock()
+				if err != nil {
+					ee.isLeader = false
+					ee.ResignIfLeader(ctx)
+					log.Error("failed to process membership event", map[string]interface{}{
+						"error": err,
+					})
+					return
+				}
+				time.Sleep(100 * time.Millisecond)
 			}
+		}()
+	})
 
-			isLeader := ee.instance.Server.Leader().String() == ee.instance.Server.ID().String()
-			var err error
-			if ee.isLeader && !isLeader {
-				ee.isLeader = false
-				event.Type = EventBecomeFollower
-				err = f(context.Background(), event)
-			} else if !ee.isLeader && isLeader {
-				ee.isLeader = true
-				event.Type = EventBecomeLeader
-				err = f(context.Background(), event)
-			}
-			if err != nil {
-				ee.isLeader = false
-				ee.ResignIfLeader(ctx)
-				log.Error("failed to process membership event", map[string]interface{}{
-					"error": err,
-				})
-				return
-			}
-			time.Sleep(100 * time.Millisecond)
-		}
-	}()
 }
 
 func (ee *embedEtcd) ResignIfLeader(ctx context.Context) {
