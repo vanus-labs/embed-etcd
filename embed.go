@@ -44,8 +44,10 @@ type EmbedEtcd interface {
 	Stop(context.Context)
 }
 
-func New() *embedEtcd {
-	ee := &embedEtcd{}
+func New(topology map[string]string) *embedEtcd {
+	ee := &embedEtcd{
+		topology: topology,
+	}
 	ee.ctx, ee.cancel = context.WithCancel(context.Background())
 	return ee
 }
@@ -64,6 +66,7 @@ type embedEtcd struct {
 	mutex      sync.RWMutex
 	once       sync.Once
 	handlers   []MembershipEventProcessor
+	topology   map[string]string
 }
 
 func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
@@ -201,8 +204,14 @@ func (ee *embedEtcd) GetLeaderAddr() string {
 	if len(member.ClientURLs) == 0 {
 		return "unavailable"
 	}
-	urls := member.ClientURLs
-	return urls[0]
+	urls := member.PeerURLs
+	for _, v := range ee.cfg.Clusters {
+		strs := strings.Split(v, "=")
+		if strs[1] == urls[0] {
+			return ee.topology[strs[0]]
+		}
+	}
+	return ""
 }
 
 var (
