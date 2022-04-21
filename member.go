@@ -31,7 +31,7 @@ type MembershipChangedEvent struct {
 }
 
 type Member interface {
-	RegisterMembershipChangedProcessor(context.Context, func(context.Context, MembershipChangedEvent) error)
+	RegisterMembershipChangedProcessor(context.Context, MembershipEventProcessor)
 	ResignIfLeader(context.Context)
 	IsLeader() bool
 	GetLeaderID() string
