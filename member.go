@@ -14,15 +14,11 @@
 
 package embedetcd
 
-import (
-	"context"
-)
-
 type EventType string
 
 const (
-	EventBecomeLeader   = "become_leader"
-	EventBecomeFollower = "become_follower"
+	EventBecomeLeader   = "leader"
+	EventBecomeFollower = "follower"
 )
 
 type MembershipChangedEvent struct {
@@ -31,8 +27,8 @@ type MembershipChangedEvent struct {
 }
 
 type Member interface {
-	RegisterMembershipChangedProcessor(context.Context, MembershipEventProcessor)
-	ResignIfLeader(context.Context)
+	RegisterMembershipChangedProcessor(MembershipEventProcessor)
+	ResignIfLeader()
 	IsLeader() bool
 	GetLeaderID() string
 	GetLeaderAddr() string
