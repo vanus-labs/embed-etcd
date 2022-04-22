@@ -195,14 +195,14 @@ func (ee *embedEtcd) GetLeaderID() string {
 func (ee *embedEtcd) GetLeaderAddr() string {
 	id := ee.instance.Server.Leader()
 	if id == 0 {
-		return "unavailable"
+		return ""
 	}
 	member := ee.instance.Server.Cluster().Member(id)
 	if member == nil {
-		return "unavailable"
+		return ""
 	}
 	if len(member.ClientURLs) == 0 {
-		return "unavailable"
+		return ""
 	}
 	urls := member.PeerURLs
 	for _, v := range ee.cfg.Clusters {
