@@ -201,17 +201,10 @@ func (ee *embedEtcd) GetLeaderAddr() string {
 	if member == nil {
 		return ""
 	}
-	if len(member.ClientURLs) == 0 {
+	if len(member.PeerURLs) == 0 {
 		return ""
 	}
-	urls := member.PeerURLs
-	for _, v := range ee.cfg.Clusters {
-		strs := strings.Split(v, "=")
-		if strs[1] == urls[0] {
-			return ee.topology[strs[0]]
-		}
-	}
-	return ""
+	return ee.topology[member.Name]
 }
 
 var (
