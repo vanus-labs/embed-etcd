@@ -21,7 +21,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	etcd := New()
+	etcd := New(map[string]string{})
 	ctx := context.Background()
 	cfg := Config{
 		Name:    "test-1",

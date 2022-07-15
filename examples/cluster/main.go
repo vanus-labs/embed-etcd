@@ -28,14 +28,16 @@ func main() {
 }
 
 func startA() {
-	etcd := embedetcd.New()
+	etcd := embedetcd.New(map[string]string{})
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
-		Name:       "etcd-1",
-		DataDir:    "/Users/wenfeng/tmp/embed_etcd/node1",
-		ClientAddr: "localhost:2379",
-		PeerAddr:   "localhost:2380",
-		Clusters:   []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		Name:                "etcd-1",
+		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node1",
+		ListenClientAddr:    "0.0.0.0:2379",
+		ListenPeerAddr:      "0.0.0.0:2380",
+		AdvertiseClientAddr: "localhost:2379",
+		AdvertisePeerAddr:   "localhost:2380",
+		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {
 		panic(err)
@@ -48,14 +50,16 @@ func startA() {
 }
 
 func startB() {
-	etcd := embedetcd.New()
+	etcd := embedetcd.New(map[string]string{})
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
-		Name:       "etcd-2",
-		DataDir:    "/Users/wenfeng/tmp/embed_etcd/node2",
-		ClientAddr: "localhost:3379",
-		PeerAddr:   "localhost:3380",
-		Clusters:   []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		Name:                "etcd-2",
+		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node2",
+		ListenClientAddr:    "0.0.0.0:3379",
+		ListenPeerAddr:      "0.0.0.0:3380",
+		AdvertiseClientAddr: "localhost:3379",
+		AdvertisePeerAddr:   "localhost:3380",
+		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {
 		panic(err)
@@ -68,14 +72,16 @@ func startB() {
 }
 
 func startC() {
-	etcd := embedetcd.New()
+	etcd := embedetcd.New(map[string]string{})
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
-		Name:       "etcd-3",
-		DataDir:    "/Users/wenfeng/tmp/embed_etcd/node3",
-		ClientAddr: "localhost:4379",
-		PeerAddr:   "localhost:4380",
-		Clusters:   []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		Name:                "etcd-3",
+		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node3",
+		ListenClientAddr:    "0.0.0.0:4379",
+		ListenPeerAddr:      "0.0.0.0:4380",
+		AdvertiseClientAddr: "localhost:4379",
+		AdvertisePeerAddr:   "localhost:4380",
+		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {
 		panic(err)

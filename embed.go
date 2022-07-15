@@ -79,19 +79,19 @@ func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
 	ee.etcdCfg.Dir = cfg.DataDir
 
 	var err error
-	if ee.etcdCfg.LCUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ClientAddr}); err != nil {
+	if ee.etcdCfg.LCUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ListenClientAddr}); err != nil {
 		return err
 	}
 
-	if ee.etcdCfg.LPUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.PeerAddr}); err != nil {
+	if ee.etcdCfg.LPUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ListenPeerAddr}); err != nil {
 		return err
 	}
 
-	if ee.etcdCfg.ACUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ClientAddr}); err != nil {
+	if ee.etcdCfg.ACUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.AdvertiseClientAddr}); err != nil {
 		return err
 	}
 
-	if ee.etcdCfg.APUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.PeerAddr}); err != nil {
+	if ee.etcdCfg.APUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.AdvertisePeerAddr}); err != nil {
 		return err
 	}
 
@@ -108,9 +108,11 @@ func (ee *embedEtcd) Start(ctx context.Context) (<-chan struct{}, error) {
 	select {
 	case <-e.Server.ReadyNotify():
 		log.Info("etcd server started", map[string]interface{}{
-			"name":        ee.cfg.Name,
-			"client_addr": ee.cfg.ClientAddr,
-			"peer_addr":   ee.cfg.PeerAddr,
+			"name":                  ee.cfg.Name,
+			"listen_client_addr":    ee.cfg.ListenClientAddr,
+			"listen_peer_addr":      ee.cfg.ListenPeerAddr,
+			"advertise_client_addr": ee.cfg.AdvertiseClientAddr,
+			"advertise_peer_addr":   ee.cfg.AdvertisePeerAddr,
 		})
 	}
 	go ee.run()
