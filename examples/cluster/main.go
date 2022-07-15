@@ -35,8 +35,8 @@ func startA() {
 		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node1",
 		ListenClientAddr:    "0.0.0.0:2379",
 		ListenPeerAddr:      "0.0.0.0:2380",
-		AdvertiseClientAddr: "localhost:2379",
-		AdvertisePeerAddr:   "localhost:2380",
+		AdvertiseClientAddr: "localhost:2279,127.0.0.1:2279",
+		AdvertisePeerAddr:   "localhost:2380,127.0.0.1:2380",
 		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {
@@ -57,8 +57,8 @@ func startB() {
 		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node2",
 		ListenClientAddr:    "0.0.0.0:3379",
 		ListenPeerAddr:      "0.0.0.0:3380",
-		AdvertiseClientAddr: "localhost:3379",
-		AdvertisePeerAddr:   "localhost:3380",
+		AdvertiseClientAddr: "localhost:3379,127.0.0.1:3379",
+		AdvertisePeerAddr:   "localhost:3380,127.0.0.1:3380",
 		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {
@@ -79,8 +79,8 @@ func startC() {
 		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node3",
 		ListenClientAddr:    "0.0.0.0:4379",
 		ListenPeerAddr:      "0.0.0.0:4380",
-		AdvertiseClientAddr: "localhost:4379",
-		AdvertisePeerAddr:   "localhost:4380",
+		AdvertiseClientAddr: "localhost:4379,127.0.0.1:4379",
+		AdvertisePeerAddr:   "localhost:4380,127.0.0.1:4380",
 		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
 	})
 	if err != nil {

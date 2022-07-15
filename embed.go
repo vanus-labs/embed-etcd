@@ -87,11 +87,29 @@ func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
 		return err
 	}
 
-	if ee.etcdCfg.ACUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.AdvertiseClientAddr}); err != nil {
+	strs := strings.Split(ee.cfg.AdvertiseClientAddr, ",")
+	var urls []string
+	if len(strs) > 1 {
+		for _, v := range strs {
+			urls = append(urls, httpSchema+v)
+		}
+	} else {
+		urls = append(urls, httpSchema+ee.cfg.AdvertiseClientAddr)
+	}
+	if ee.etcdCfg.ACUrls, err = types.NewURLs(urls); err != nil {
 		return err
 	}
 
-	if ee.etcdCfg.APUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.AdvertisePeerAddr}); err != nil {
+	strs = strings.Split(ee.cfg.AdvertisePeerAddr, ",")
+	urls = []string{}
+	if len(strs) > 1 {
+		for _, v := range strs {
+			urls = append(urls, httpSchema+v)
+		}
+	} else {
+		urls = append(urls, httpSchema+ee.cfg.AdvertisePeerAddr)
+	}
+	if ee.etcdCfg.APUrls, err = types.NewURLs(urls); err != nil {
 		return err
 	}
 
