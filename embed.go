@@ -67,6 +67,7 @@ type embedEtcd struct {
 	once       sync.Once
 	handlers   []MembershipEventProcessor
 	topology   map[string]string
+	isReady    bool
 }
 
 func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
@@ -125,6 +126,7 @@ func (ee *embedEtcd) Start(ctx context.Context) (<-chan struct{}, error) {
 	ee.instance = e
 	select {
 	case <-e.Server.ReadyNotify():
+		ee.isReady = true
 		log.Info("etcd server started", map[string]interface{}{
 			"name":                  ee.cfg.Name,
 			"listen_client_addr":    ee.cfg.ListenClientAddr,
@@ -225,6 +227,10 @@ func (ee *embedEtcd) GetLeaderAddr() string {
 		return ""
 	}
 	return ee.topology[member.Name]
+}
+
+func (ee *embedEtcd) IsReady() bool {
+	return ee.isReady
 }
 
 var (

@@ -32,6 +32,7 @@ type Member interface {
 	IsLeader() bool
 	GetLeaderID() string
 	GetLeaderAddr() string
+	IsReady() bool
 }
 
 type LeaderInfo struct {
