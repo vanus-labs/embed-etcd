@@ -17,14 +17,16 @@ package embedetcd
 import (
 	"context"
 	"errors"
-	"github.com/linkall-labs/embed-etcd/log"
-	"go.etcd.io/etcd/client/pkg/v3/types"
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/server/v3/embed"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/linkall-labs/embed-etcd/log"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"go.etcd.io/etcd/client/pkg/v3/types"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 )
 
 const (
@@ -79,12 +81,26 @@ func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
 	ee.etcdCfg.Name = cfg.Name
 	ee.etcdCfg.Dir = cfg.DataDir
 
+	copySecurityDetails := func(tls *transport.TLSInfo, tlsCfg *TLSConfig) {
+		tls.CertFile = tlsCfg.CertFile
+		tls.KeyFile = tlsCfg.KeyFile
+		tls.ClientCertFile = tlsCfg.ClientCertFile
+		tls.ClientKeyFile = tlsCfg.ClientKeyFile
+		tls.TrustedCAFile = tlsCfg.TrustedCAFile
+	}
+	copySecurityDetails(&ee.etcdCfg.ClientTLSInfo, &cfg.TLSConfig)
+	copySecurityDetails(&ee.etcdCfg.PeerTLSInfo, &cfg.TLSConfig)
+	schema := httpSchema
+	if !ee.etcdCfg.ClientTLSInfo.Empty() {
+		schema = httpsSchema
+	}
+
 	var err error
-	if ee.etcdCfg.LCUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ListenClientAddr}); err != nil {
+	if ee.etcdCfg.LCUrls, err = types.NewURLs([]string{schema + ee.cfg.ListenClientAddr}); err != nil {
 		return err
 	}
 
-	if ee.etcdCfg.LPUrls, err = types.NewURLs([]string{httpSchema + ee.cfg.ListenPeerAddr}); err != nil {
+	if ee.etcdCfg.LPUrls, err = types.NewURLs([]string{schema + ee.cfg.ListenPeerAddr}); err != nil {
 		return err
 	}
 
@@ -92,10 +108,10 @@ func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
 	var urls []string
 	if len(strs) > 1 {
 		for _, v := range strs {
-			urls = append(urls, httpSchema+v)
+			urls = append(urls, schema+v)
 		}
 	} else {
-		urls = append(urls, httpSchema+ee.cfg.AdvertiseClientAddr)
+		urls = append(urls, schema+ee.cfg.AdvertiseClientAddr)
 	}
 	if ee.etcdCfg.ACUrls, err = types.NewURLs(urls); err != nil {
 		return err
@@ -105,16 +121,19 @@ func (ee *embedEtcd) Init(ctx context.Context, cfg Config) error {
 	urls = []string{}
 	if len(strs) > 1 {
 		for _, v := range strs {
-			urls = append(urls, httpSchema+v)
+			urls = append(urls, schema+v)
 		}
 	} else {
-		urls = append(urls, httpSchema+ee.cfg.AdvertisePeerAddr)
+		urls = append(urls, schema+ee.cfg.AdvertisePeerAddr)
 	}
 	if ee.etcdCfg.APUrls, err = types.NewURLs(urls); err != nil {
 		return err
 	}
-
-	ee.etcdCfg.InitialCluster = strings.Join(ee.cfg.Clusters, ",")
+	urls = []string{}
+	for name, url := range ee.cfg.Clusters {
+		urls = append(urls, name+"="+schema+url)
+	}
+	ee.etcdCfg.InitialCluster = strings.Join(urls, ",")
 	return nil
 }
 

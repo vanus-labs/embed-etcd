@@ -32,12 +32,21 @@ func startA() {
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
 		Name:                "etcd-1",
-		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node1",
+		DataDir:             "/tmp/embed_etcd/node1",
 		ListenClientAddr:    "0.0.0.0:2379",
 		ListenPeerAddr:      "0.0.0.0:2380",
-		AdvertiseClientAddr: "localhost:2279,127.0.0.1:2279",
-		AdvertisePeerAddr:   "localhost:2380,127.0.0.1:2380",
-		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		AdvertiseClientAddr: "localhost:2279",
+		AdvertisePeerAddr:   "localhost:2380",
+		Clusters: map[string]string{
+			"etcd-1": "localhost:2380",
+			"etcd-2": "localhost:3380",
+			"etcd-3": "localhost:4380",
+		},
+		TLSConfig: embedetcd.TLSConfig{
+			CertFile:      "./examples/test/server.crt",
+			KeyFile:       "./examples/test/server.key",
+			TrustedCAFile: "./examples/test/ca.crt",
+		},
 	})
 	if err != nil {
 		panic(err)
@@ -54,12 +63,21 @@ func startB() {
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
 		Name:                "etcd-2",
-		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node2",
+		DataDir:             "/tmp/embed_etcd/node2",
 		ListenClientAddr:    "0.0.0.0:3379",
 		ListenPeerAddr:      "0.0.0.0:3380",
-		AdvertiseClientAddr: "localhost:3379,127.0.0.1:3379",
-		AdvertisePeerAddr:   "localhost:3380,127.0.0.1:3380",
-		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		AdvertiseClientAddr: "localhost:3379",
+		AdvertisePeerAddr:   "localhost:3380",
+		Clusters: map[string]string{
+			"etcd-1": "localhost:2380",
+			"etcd-2": "localhost:3380",
+			"etcd-3": "localhost:4380",
+		},
+		TLSConfig: embedetcd.TLSConfig{
+			CertFile:      "./examples/test/server.crt",
+			KeyFile:       "./examples/test/server.key",
+			TrustedCAFile: "./examples/test/ca.crt",
+		},
 	})
 	if err != nil {
 		panic(err)
@@ -76,12 +94,21 @@ func startC() {
 	ctx := context.Background()
 	err := etcd.Init(ctx, embedetcd.Config{
 		Name:                "etcd-3",
-		DataDir:             "/Users/wenfeng/tmp/embed_etcd/node3",
+		DataDir:             "/tmp/embed_etcd/node3",
 		ListenClientAddr:    "0.0.0.0:4379",
 		ListenPeerAddr:      "0.0.0.0:4380",
-		AdvertiseClientAddr: "localhost:4379,127.0.0.1:4379",
-		AdvertisePeerAddr:   "localhost:4380,127.0.0.1:4380",
-		Clusters:            []string{"etcd-1=http://localhost:2380,etcd-2=http://localhost:3380,etcd-3=http://localhost:4380"},
+		AdvertiseClientAddr: "localhost:4379",
+		AdvertisePeerAddr:   "localhost:4380",
+		Clusters: map[string]string{
+			"etcd-1": "localhost:2380",
+			"etcd-2": "localhost:3380",
+			"etcd-3": "localhost:4380",
+		},
+		TLSConfig: embedetcd.TLSConfig{
+			CertFile:      "./examples/test/server.crt",
+			KeyFile:       "./examples/test/server.key",
+			TrustedCAFile: "./examples/test/ca.crt",
+		},
 	})
 	if err != nil {
 		panic(err)
