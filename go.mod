@@ -3,6 +3,7 @@ module github.com/linkall-labs/embed-etcd
 go 1.17
 
 require (
+	github.com/golang/mock v1.5.0
 	github.com/sirupsen/logrus v1.8.1
 	go.etcd.io/etcd/client/pkg/v3 v3.6.0-alpha.0
 	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0
